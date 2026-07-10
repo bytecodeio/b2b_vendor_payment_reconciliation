@@ -11,52 +11,59 @@
   - name: Order Date Range
     title: Order Date Range
     type: date_filter
-    default_value: "last 2 years"
+    default_value: "2016/01/01 to 2020/12/31"
 
   - name: Financial Period
     title: Financial Period
     type: date_filter
-    default_value: "last 2 years"
+    default_value: "2016/01/01 to 2020/12/31"
 
   - name: Vendor Name (Iowa)
     title: Vendor Name (Iowa)
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     field: iowa_liquor_sales.vendor_name
 
   - name: SEC Company Name
     title: SEC Company Name
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     field: sec_financials.company_name
 
   - name: Store City
     title: Store City
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     field: iowa_liquor_sales.city
 
   - name: Liquor Category
     title: Liquor Category
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     field: iowa_liquor_sales.category_name
 
   - name: SEC Document Type
     title: SEC Document Type
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     field: sec_financials.document_type
 
   - name: Retail Store Name
     title: Retail Store Name
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     field: iowa_liquor_sales.store_name
 
   - name: Item Description
     title: Item Description
     type: field_filter
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     field: iowa_liquor_sales.item_description
 
@@ -74,6 +81,7 @@
   - name: tile_1_revenue
     title: "Total Wholesale Revenue (Retail)"
     type: single_value
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     measures: [iowa_liquor_sales.total_sale_dollars]
     listen:
@@ -83,6 +91,7 @@
   - name: tile_2_bottles
     title: "Total Bottles Distributed (Supply Chain)"
     type: single_value
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     measures: [iowa_liquor_sales.total_bottles_sold]
     listen:
@@ -92,6 +101,7 @@
   - name: tile_3_aov
     title: "Average Order Value (Sales)"
     type: single_value
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     measures: [iowa_liquor_sales.average_order_value]
     listen:
@@ -101,6 +111,7 @@
   - name: tile_4_ap
     title: "Total Accounts Payable (Finance)"
     type: single_value
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     measures: [sec_financials.total_accounts_payable]
     listen:
@@ -108,44 +119,40 @@
       SEC Company Name: sec_financials.company_name
 
   # --- MERGED QUERIES (Tiles 5-6) ---
+  # Resolved: Listen arrays fully cleaned and sub-queries isolated
   - name: tile_5_merged_reconciliation
     title: "Vendor Reconciliation Matrix (Merged Query)"
     type: table
     merged_queries:
-    - explore: iowa_liquor_sales
-      dimensions: [iowa_liquor_sales.vendor_name]
-      measures: [iowa_liquor_sales.total_sale_dollars]
-    - explore: sec_financials
-      dimensions: [sec_financials.company_name]
-      measures: [sec_financials.total_accounts_payable]
+    - model: b2b_vendor_payment_reconciliation
+      explore: iowa_liquor_sales
+      fields: [iowa_liquor_sales.vendor_name, iowa_liquor_sales.total_sale_dollars]
+    - model: b2b_vendor_payment_reconciliation
+      explore: sec_financials
+      fields: [sec_financials.company_name, sec_financials.total_accounts_payable]
       join_fields:
       - field_name: sec_financials.company_name
         source_field_name: iowa_liquor_sales.vendor_name
-    listen:
-    - "Vendor Name (Iowa)": iowa_liquor_sales.vendor_name
-    - "SEC Company Name": sec_financials.company_name
 
   - name: tile_6_merged_health
     title: "Vendor Financial Health vs Volume (Merged Query)"
     type: looker_scatter
     merged_queries:
-    - explore: iowa_liquor_sales
-      dimensions: [iowa_liquor_sales.vendor_name]
-      measures: [iowa_liquor_sales.total_bottles_sold]
-    - explore: sec_financials
-      dimensions: [sec_financials.company_name]
-      measures: [sec_financials.average_accounts_payable]
+    - model: b2b_vendor_payment_reconciliation
+      explore: iowa_liquor_sales
+      fields: [iowa_liquor_sales.vendor_name, iowa_liquor_sales.total_bottles_sold]
+    - model: b2b_vendor_payment_reconciliation
+      explore: sec_financials
+      fields: [sec_financials.company_name, sec_financials.average_accounts_payable]
       join_fields:
       - field_name: sec_financials.company_name
         source_field_name: iowa_liquor_sales.vendor_name
-    listen:
-    - "Vendor Name (Iowa)": iowa_liquor_sales.vendor_name
-    - "SEC Company Name": sec_financials.company_name
 
   # --- FINANCE DEEP DIVE (Tiles 7-10) ---
   - name: tile_7_ap_trend
     title: "Accounts Payable Trend by Quarter"
     type: looker_area
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     dimensions: [sec_financials.period_end_quarter]
     measures: [sec_financials.total_accounts_payable]
@@ -155,6 +162,7 @@
   - name: tile_8_ap_by_company
     title: "Top Vendors by Accounts Payable"
     type: looker_bar
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     dimensions: [sec_financials.company_name]
     measures: [sec_financials.total_accounts_payable]
@@ -166,6 +174,7 @@
   - name: tile_9_avg_ap_trend
     title: "Average AP Fluctuation"
     type: looker_line
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     dimensions: [sec_financials.period_end_month]
     measures: [sec_financials.average_accounts_payable]
@@ -175,6 +184,7 @@
   - name: tile_10_doc_type_breakdown
     title: "Filings by Document Type"
     type: looker_pie
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     dimensions: [sec_financials.document_type]
     measures: [sec_financials.total_accounts_payable]
@@ -185,6 +195,7 @@
   - name: tile_11_sales_pivot
     title: "Revenue by Top Cities (Pivoted by Category)"
     type: looker_column
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.city]
     pivots: [iowa_liquor_sales.category_name]
@@ -199,7 +210,8 @@
 
   - name: tile_12_bottle_volume
     title: "Bottle Volume Distribution"
-    type: looker_donut_multiples
+    type: looker_pie
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.category_name]
     measures: [iowa_liquor_sales.total_bottles_sold]
@@ -211,6 +223,7 @@
   - name: tile_13_store_performance
     title: "Top 15 Stores by Revenue"
     type: looker_bar
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.store_name]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -223,6 +236,7 @@
   - name: tile_14_city_volume_map
     title: "Bottle Volume by City"
     type: looker_pie
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.city]
     measures: [iowa_liquor_sales.total_bottles_sold]
@@ -234,6 +248,7 @@
   - name: tile_15_category_revenue
     title: "Revenue by Liquor Category"
     type: looker_column
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.category_name]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -245,6 +260,7 @@
   - name: tile_16_revenue_trend
     title: "Wholesale Revenue Trend Over Time"
     type: looker_line
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.date_month]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -255,6 +271,7 @@
   - name: tile_17_vendor_market_share
     title: "Vendor Market Share (Revenue)"
     type: looker_pie
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.vendor_name]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -266,6 +283,7 @@
   - name: tile_18_aov_by_category
     title: "AOV by Category"
     type: looker_bar
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.category_name]
     measures: [iowa_liquor_sales.average_order_value]
@@ -278,6 +296,7 @@
   - name: tile_19_top_items
     title: "Top 10 Best Selling Items"
     type: looker_grid
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.item_description]
     measures: [iowa_liquor_sales.total_sale_dollars, iowa_liquor_sales.total_bottles_sold]
@@ -290,6 +309,7 @@
   - name: tile_20_aov_trend
     title: "Average Order Value Trend"
     type: looker_area
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.date_quarter]
     measures: [iowa_liquor_sales.average_order_value]
@@ -299,6 +319,7 @@
   - name: tile_21_sales_scatter
     title: "Order Value vs Bottles Sold"
     type: looker_scatter
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.vendor_name]
     measures: [iowa_liquor_sales.average_order_value, iowa_liquor_sales.total_bottles_sold]
@@ -309,6 +330,7 @@
   - name: tile_22_vendor_pivot
     title: "Vendor Volume Pivoted by Year"
     type: table
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.vendor_name]
     pivots: [iowa_liquor_sales.date_year]
@@ -322,6 +344,7 @@
   - name: tile_23_margin_proxy
     title: "Store Estimated Profit Margin (Table Calc)"
     type: table
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.store_name]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -339,6 +362,7 @@
   - name: tile_24_yoy_growth
     title: "YoY Revenue Growth (Table Calc)"
     type: looker_column
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.date_year]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -353,6 +377,7 @@
   - name: tile_25_aov_variance
     title: "AOV Variance by City"
     type: looker_bar
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.city]
     measures: [iowa_liquor_sales.average_order_value]
@@ -369,6 +394,7 @@
   - name: tile_26_bottle_share
     title: "% of Total Bottles by Category"
     type: table
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.category_name]
     measures: [iowa_liquor_sales.total_bottles_sold]
@@ -385,6 +411,7 @@
   - name: tile_27_recent_orders
     title: "50 Most Recent Orders (Raw Data)"
     type: looker_grid
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.date_date, iowa_liquor_sales.store_name, iowa_liquor_sales.vendor_name, iowa_liquor_sales.item_description]
     measures: [iowa_liquor_sales.total_sale_dollars]
@@ -396,6 +423,7 @@
   - name: tile_28_city_vendor_matrix
     title: "City vs Vendor Revenue Matrix"
     type: looker_grid
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.city]
     pivots: [iowa_liquor_sales.vendor_name]
@@ -410,6 +438,7 @@
   - name: tile_29_sec_filing_dates
     title: "Recent SEC Filings Volume"
     type: looker_column
+    model: b2b_vendor_payment_reconciliation
     explore: sec_financials
     dimensions: [sec_financials.period_end_month]
     measures: [sec_financials.total_accounts_payable]
@@ -419,6 +448,7 @@
   - name: tile_30_executive_summary
     title: "Executive KPI Summary Table"
     type: table
+    model: b2b_vendor_payment_reconciliation
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.vendor_name]
     measures: [iowa_liquor_sales.total_sale_dollars, iowa_liquor_sales.total_bottles_sold, iowa_liquor_sales.average_order_value]

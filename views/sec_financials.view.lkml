@@ -1,5 +1,18 @@
 view: sec_financials {
-  sql_table_name: `sec-public-data-bq.sec_public_dataset.financial_statements` ;;
+  derived_table: {
+    sql:
+      SELECT
+        submission_number AS submission_number,
+        company_name AS company_name,
+        -- Parses YYYYMMDD string/integer (e.g., 20160331) safely into a true TIMESTAMP
+        PARSE_TIMESTAMP('%Y%m%d', CAST(period_end_date AS STRING)) AS period_end_date,
+        form AS document_type,
+        CAST(value AS FLOAT64) AS accounts_payable
+      FROM `bigquery-public-data.sec_quarterly_financials.quick_summary`
+      WHERE measure_tag IN ('AccountsPayableCurrent', 'AccountsPayable')
+        AND (number_of_quarters = 0 OR number_of_quarters IS NULL)
+    ;;
+  }
 
   # --- Primary Key ---
   dimension: submission_number {
@@ -7,19 +20,6 @@ view: sec_financials {
     hidden: yes
     type: string
     sql: ${TABLE}.submission_number ;;
-  }
-
-  # --- Hidden Technical Fields ---
-  dimension: cik {
-    hidden: yes
-    type: string
-    sql: ${TABLE}.cik ;;
-  }
-
-  dimension: adsh {
-    hidden: yes
-    type: string
-    sql: ${TABLE}.adsh ;;
   }
 
   # --- Dimensions ---
