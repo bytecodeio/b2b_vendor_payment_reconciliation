@@ -1,0 +1,37 @@
+You are an expert Looker LookML developer. I need you to create a complete, production-ready LookML project including two views, a model file, and a LookML dashboard. 
+
+The dashboard will be used by Google to test the Looker Conversational Analytics on Dashboards feature. It needs to reflect a complex, real-world business use case: **B2B Vendor Payment Reconciliation & Supply Chain Aging**. The persona is a Financial Operations Manager & Supply Chain Analyst.
+
+### 1. Data Sources & Schema Requirements
+You will use two specific public BigQuery datasets. You must adhere EXACTLY to these schema instructions:
+
+**Dataset A: Iowa Liquor Sales**
+* **Table:** `bigquery-public-data.iowa_liquor_sales.sales`
+* **Fields to define:** `invoice_and_item_number` (Primary Key, hidden), `date` (timeframe group), `store_name`, `vendor_name`, `category_name`, `city`, `item_description`.
+* **Measures to define:** `total_sale_dollars` (sum of `sale_dollars`), `total_bottles_sold` (sum of `bottles_sold`), `average_order_value` (average of `sale_dollars`). 
+* Hide technical fields like `store_number`, `vendor_number`, `county_number`, `category`, `sale_dollars`, `state_bottle_cost`, `bottles_sold`. Do not use commas to separate LookML parameters.
+
+**Dataset B: SEC Financials**
+* **Table:** MUST use the pre-joined summary table: `bigquery-public-data.sec_quarterly_financials.quick_summary`. Do not attempt to join `submission` and `numbers` tables manually.
+* **Derived Table SQL Requirements:**
+  * Select `submission_number`, `company_name`, `form` (as `document_type`), and `value` (as `accounts_payable`).
+  * The `period_end_date` is stored as an integer/string like `YYYYMMDD`. You MUST cast it using `PARSE_TIMESTAMP('%Y%m%d', CAST(period_end_date AS STRING))`.
+  * Filter the WHERE clause using: `measure_tag IN ('AccountsPayableCurrent', 'AccountsPayable') AND (number_of_quarters = 0 OR number_of_quarters IS NULL)`.
+* **Measures:** `total_accounts_payable` (sum), `average_accounts_payable` (average).
+
+### 2. Model Requirements (`b2b_vendor_payment_reconciliation.model.lkml`)
+* Connection: `"bigquery_public_data"`
+* Must include both views and dashboards: `include: "/**/*.view.lkml"` and `include: "/**/*.dashboard.lookml"`
+* Define two explores: `iowa_liquor_sales` and `sec_financials`, complete with user-friendly labels and descriptions. Do not map them with a SQL join.
+
+### 3. Dashboard Requirements (`vendor_reconciliation_and_aging.dashboard.lookml`)
+Generate exactly 30 tiles and 10 filters. 
+* **Filters:** Include filters for Date Range, Financial Period, Vendor, SEC Company Name, City, Category, Document Type, Store Name, Item Description, and Min Order Value.
+* **CRITICAL - Date Range Defaults:** The SEC dataset only has data from 2016 to 2020. The `default_value` for both the `Order Date Range` and `Financial Period` filters MUST be hardcoded to `"2016/01/01 to 2020/12/31"` so the tiles return overlapping data.
+* **Visualizations:** Use at least 8 different types (single_value, table, looker_column, looker_bar, looker_line, looker_area, looker_pie, looker_scatter, looker_grid). Do not use `looker_donut_multiples` without a pivot.
+* **Complex Features:** Include at least 3 tiles using Pivots, and at least 4 tiles using Custom Fields / Table Calculations (e.g., YoY Growth, Margins, % of Total).
+* **Merged Queries:** Create at least 2 `merged_queries` tiles combining Iowa Sales and SEC Financials. 
+  * *CRITICAL SYNTAX:* Inside `merged_queries`, sub-queries MUST explicitly declare the `model: b2b_vendor_payment_reconciliation`. They must use `fields: [...]` instead of `dimensions:` and `measures:`. Do NOT include `listen:` blocks inside or at the root of the merged query tiles; rely on the global filters to map automatically.
+* **Standard Tile Listen Syntax:** All non-merged tiles must use the standard hash syntax for listening to filters (e.g., `"Order Date Range": iowa_liquor_sales.date_date`). Quote the filter names.
+
+Please output the Persona and Purpose briefly, and then output the full LookML code in separate code blocks for the two Views, the Model, and the complete 30-tile Dashboard.
