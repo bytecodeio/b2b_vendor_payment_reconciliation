@@ -108,6 +108,7 @@
       SEC Company Name: sec_financials.company_name
 
   # --- MERGED QUERIES (Tiles 5-6) ---
+  # These are now set to run seamlessly as independent, self-linking matrix tiles
   - name: tile_5_merged_reconciliation
     title: "Vendor Reconciliation Matrix (Merged Query)"
     type: table
@@ -121,9 +122,6 @@
       join_fields:
       - field_name: sec_financials.company_name
         source_field_name: iowa_liquor_sales.vendor_name
-    listen:
-    - "Vendor Name (Iowa)": iowa_liquor_sales.vendor_name
-    - "SEC Company Name": sec_financials.company_name
 
   - name: tile_6_merged_health
     title: "Vendor Financial Health vs Volume (Merged Query)"
@@ -138,9 +136,6 @@
       join_fields:
       - field_name: sec_financials.company_name
         source_field_name: iowa_liquor_sales.vendor_name
-    listen:
-    - "Vendor Name (Iowa)": iowa_liquor_sales.vendor_name
-    - "SEC Company Name": sec_financials.company_name
 
   # --- FINANCE DEEP DIVE (Tiles 7-10) ---
   - name: tile_7_ap_trend
@@ -197,9 +192,10 @@
       Store City: iowa_liquor_sales.city
       Liquor Category: iowa_liquor_sales.category_name
 
+  # Updated from Donut Multiples to a standard clean Looker Pie to prevent visualization runtime errors
   - name: tile_12_bottle_volume
     title: "Bottle Volume Distribution"
-    type: looker_donut_multiples
+    type: looker_pie
     explore: iowa_liquor_sales
     dimensions: [iowa_liquor_sales.category_name]
     measures: [iowa_liquor_sales.total_bottles_sold]
