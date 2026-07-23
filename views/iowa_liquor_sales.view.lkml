@@ -39,8 +39,14 @@ view: iowa_liquor_sales {
     type: time
     timeframes: [raw, date, week, month, quarter, year]
     convert_tz: no
-    datatype: date
-    sql: ${TABLE}.date ;;
+    datatype: datetime
+    #sql: ${TABLE}.date ;;
+    # BigQuery SQL syntax to shift the date forward natively
+    sql:
+    TIMESTAMP_ADD(
+      ${TABLE}.date,
+      INTERVAL DATE_DIFF(CURRENT_DATE(), DATE('2026-05-01'), DAY) DAY
+    ) ;;
     label: "Order"
     description: "The date the wholesale liquor order was placed."
   }

@@ -1,18 +1,6 @@
+
 view: sec_financials {
-  derived_table: {
-    sql:
-      SELECT
-        submission_number AS submission_number,
-        company_name AS company_name,
-        -- Parses YYYYMMDD string/integer (e.g., 20160331) safely into a true TIMESTAMP
-        PARSE_TIMESTAMP('%Y%m%d', CAST(period_end_date AS STRING)) AS period_end_date,
-        form AS document_type,
-        CAST(value AS FLOAT64) AS accounts_payable
-      FROM `bigquery-public-data.sec_quarterly_financials.quick_summary`
-      WHERE measure_tag IN ('AccountsPayableCurrent', 'AccountsPayable')
-        AND (number_of_quarters = 0 OR number_of_quarters IS NULL)
-    ;;
-  }
+  sql_table_name: `bigquery-public-data.sec_quarterly_financials.quick_summary` ;;
 
   # --- Primary Key ---
   dimension: submission_number {
@@ -31,17 +19,39 @@ view: sec_financials {
     tags: ["Corporation", "Enterprise", "Vendor"]
   }
 
+  dimension: measure_tag {
+    type: string
+    sql: ${TABLE}.measure_tag ;;
+    hidden: yes
+  }
+
+  dimension: number_of_quarters {
+    type: number
+    sql: ${TABLE}.number_of_quarters ;;
+    hidden: yes
+  }
+
   dimension_group: period_end {
     type: time
     timeframes: [raw, date, month, quarter, year]
-    sql: ${TABLE}.period_end_date ;;
+    #sql: ${TABLE}.period_end_date ;;
+    sql: TIMESTAMP( DATE_ADD(  PARSE_DATE('%Y%m%d', CAST(${TABLE}.period_end_date AS STRING)), INTERVAL (EXTRACT(YEAR FROM CURRENT_DATE()) - 2020) YEAR)) ;;
     label: "Financial Period End"
-    description: "The end date for the reported financial quarter/year."
+    description: "The end date for the reported financial month."
+  }
+
+  dimension_group: period_end_original {
+    hidden: yes
+    type: time
+    timeframes: [raw, date, month, quarter, year]
+    sql: PARSE_TIMESTAMP('%Y%m%d', CAST(${TABLE}.period_end_date AS STRING))  ;;
+    label: "Financial Period End Original"
+    description: "The dynamically shifted end date for the reported financial quarter/year."
   }
 
   dimension: document_type {
     type: string
-    sql: ${TABLE}.document_type ;;
+    sql: ${TABLE}.form ;;
     label: "SEC Form Type"
     description: "The type of SEC filing (e.g., 10-K, 10-Q)."
   }
@@ -49,7 +59,7 @@ view: sec_financials {
   dimension: accounts_payable {
     type: number
     hidden: yes
-    sql: ${TABLE}.accounts_payable ;;
+    sql: CAST(${TABLE}.value AS FLOAT64) ;;
   }
 
   # --- Measures ---
